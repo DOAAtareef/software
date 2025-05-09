@@ -22,11 +22,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
         $record = mysqli_fetch_assoc($result);
         $email = $record["email"];
 
-        // إنشاء رمز فريد وتاريخ انتهاء بعد ساعة
+       
         $token = bin2hex(random_bytes(32));
         $tokenExpiry = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
-        // تحديث جدول المستخدمين
+        
         $updateSql = "UPDATE users SET reset_token = ?, token_status = 1, token_expiry = ? WHERE username = ?";
         $updateStmt = mysqli_prepare($conn, $updateSql);
         mysqli_stmt_bind_param($updateStmt, "sss", $token, $tokenExpiry, $username);

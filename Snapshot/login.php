@@ -1,17 +1,12 @@
 <?php
 session_start();
-
-// تنظيف الجلسة تماماً قبل البدء
-
-//echo "<pre>"; print_r($_SESSION); echo "</pre>";
-
 require 'C:\Program Files\Ampps\www\Snapshot\Includes\db.php';
 
+// Redirect already logged-in and verified users
 if (
-  isset($_SESSION['verified']) && $_SESSION['verified'] === true &&
-  isset($_SESSION['2Floggedin']) && $_SESSION['2Floggedin'] === true
-) 
-{
+    isset($_SESSION['verified']) && $_SESSION['verified'] === true &&
+    isset($_SESSION['2Floggedin']) && $_SESSION['2Floggedin'] === true
+) {
     if ($_SESSION['role'] === 'admin') {
         header("Location: admin/dashboard.php");
     } else {
@@ -20,17 +15,43 @@ if (
     exit();
 }
 
-if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response'])) {
+// Initialize failed attempts count
+if (!isset($_SESSION['failed_attempts'])) {
+    $_SESSION['failed_attempts'] = 0;
+}
+
+// Lockout after 3 failed attempts
+if ($_SESSION['failed_attempts'] >= 3) {
+    if (!isset($_SESSION['lockout_time'])) {
+        $_SESSION['lockout_time'] = time() + 180; // lock for 3 minutes
+    }
+
+    if (time() < $_SESSION['lockout_time']) {
+        $remaining = $_SESSION['lockout_time'] - time();
+        $minutes = floor($remaining / 60);
+        $seconds = $remaining % 60;
+        $error = "Too many failed login attempts. Please try again in {$minutes} minutes and {$seconds} seconds.";
+    } else {
+        $_SESSION['failed_attempts'] = 0;
+        unset($_SESSION['lockout_time']);
+    }
+}
+
+if (
+    isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']) &&
+    $_SESSION['failed_attempts'] < 3
+) {
     $username = $_POST["username"];
     $password = $_POST["password"];
     $recaptchaSecret = "6Lfd0Z4pAAAAAAYveHV58d0aaBGBmOQQruKXPKgP";
     $recaptchaResponse = $_POST['g-recaptcha-response'];
 
+    // Verify reCAPTCHA
     $verifyResponse = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptchaSecret&response=$recaptchaResponse");
     $responseData = json_decode($verifyResponse);
 
     if ($responseData->success) {
-      $sql = "SELECT id, username, password, email, role, secret_key FROM users WHERE username = ?";
+        $sql = "SELECT id, username, password, email, role, secret_key FROM users WHERE username = ?";
 
         if ($stmt = mysqli_prepare($conn, $sql)) {
             mysqli_stmt_bind_param($stmt, "s", $username);
@@ -38,23 +59,28 @@ if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']
             mysqli_stmt_store_result($stmt);
 
             if (mysqli_stmt_num_rows($stmt) == 1) {
-              mysqli_stmt_bind_result($stmt, $id, $username_db, $hash_password, $email, $role, $secret_key);
+                mysqli_stmt_bind_result($stmt, $id, $username_db, $hash_password, $email, $role, $secret_key);
 
                 if (mysqli_stmt_fetch($stmt)) {
                     if (password_verify($password, $hash_password)) {
+                        session_regenerate_id(true); // Protect from session fixation
                         $_SESSION['verified'] = true;
                         $_SESSION['username'] = $username_db;
                         $_SESSION['email'] = $email;
                         $_SESSION['role'] = $role;
                         $_SESSION['SecretCode'] = $secret_key;
                         $_SESSION['user_id'] = $id;
+                        $_SESSION['failed_attempts'] = 0;
+                        unset($_SESSION['lockout_time']);
                         header("Location: verify2fa.php");
                         exit();
                     } else {
-                        $error = "Invalid password.";
+                        $_SESSION['failed_attempts']++;
+                        $error = "Incorrect password.";
                     }
                 }
             } else {
+                $_SESSION['failed_attempts']++;
                 $error = "Invalid username or password.";
             }
             mysqli_stmt_close($stmt);
@@ -65,7 +91,6 @@ if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,7 +99,6 @@ if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']
   <title>Login - My Snapshot Platform</title>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
-    
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: url('https://i.etsystatic.com/12346933/r/il/597c3d/1293789843/il_1080xN.1293789843_2ybp.jpg') no-repeat center center fixed;
@@ -166,8 +190,6 @@ if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']
     margin-top: 0rem;
     border-top: 1px solid #e0a3b0;
   }
-
-
   </style>
 </head>
 <body>
@@ -178,7 +200,7 @@ if (isset($_POST["username"], $_POST["password"], $_POST['g-recaptcha-response']
 
   <div class="login-container">
     <h2>Login to Your Account</h2>
-    
+
     <?php if (isset($error)): ?>
       <div class="error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
