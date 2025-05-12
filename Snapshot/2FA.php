@@ -22,7 +22,7 @@ if ($_SESSION["reg"] == 1) {
 
     $displayMessage = "Please enter the following secret into your phone's 2FA app to complete the setup.";
 
-    // استخدمي Google Charts لتوليد QR
+    
     $qrCodeData = $google2fa->getQRCodeUrl('My Snapshot Platform', $username, $secretKey);
     $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' . urlencode($qrCodeData);
 
@@ -45,8 +45,8 @@ html, body {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center; /* محاذاة المحتوى في المنتصف */
-    align-items: center; /* محاذاة المحتوى عموديًا */
+    justify-content: center; 
+    align-items: center; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: url('https://i.etsystatic.com/12346933/r/il/597c3d/1293789843/il_1080xN.1293789843_2ybp.jpg') no-repeat center center fixed;
     background-size: cover;

@@ -6,7 +6,7 @@ session_start();
 if (isset($_POST['code'])) {
     require_once(__DIR__ . '/vendor/autoload.php');
 
-    // تأكد من أن الجلسة تحتوي على قيمة verified فقط
+    
     if (isset($_SESSION["verified"]) && $_SESSION["verified"] === true && !isset($_SESSION["2Floggedin"])) {
         $google2fa = new PragmaRX\Google2FA\Google2FA();
         $code = $_POST['code'];

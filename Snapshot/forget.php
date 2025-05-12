@@ -6,12 +6,11 @@ require 'C:\Program Files\Ampps\www\Snapshot\Includes\db.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-$message = ''; // ستُستخدم لعرض الرسائل للمستخدم
-
+$message = ''; 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
     $username = trim($_POST["username"]);
 
-    // التحقق من وجود المستخدم
+    
     $sql = "SELECT * FROM users WHERE username = ?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $username);
@@ -38,9 +37,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
-            $mail->Username = 'ware43193@gmail.com';       // ✏️ ضع إيميلك هنا
-            $mail->Password = 'ykcm edrt kgxi xbie';       // ✏️ استخدم "كلمة مرور التطبيقات" هنا
-            $mail->SMTPSecure = 'tls';                     // أو 'ssl' إذا استخدمت المنفذ 465
+            $mail->Username = 'ware43193@gmail.com';     
+            $mail->Password = 'ykcm edrt kgxi xbie';       
+            $mail->SMTPSecure = 'tls';                      
             $mail->Port = 587;
 
             $mail->setFrom('ware43193@gmail.com', 'Support');
@@ -50,13 +49,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
             $mail->Body = "Hi $username,\n\nClick the link below to reset your password:\n\nhttp://localhost/SS_modified/Snapshot/reset.php?token=$token\n\nIf you didn’t request this, you can ignore the message.";
 
             $mail->send();
-            $message = "A password reset link has been sent to your email."; // رسالة النجاح
+            $message = "A password reset link has been sent to your email."; 
         } catch (Exception $e) {
-            $message = "Failed to send email. Error: {$mail->ErrorInfo}"; // رسالة الخطأ
-        }
+            $message = "Failed to send email. Error: {$mail->ErrorInfo}";         }
 
     } else {
-        $message = "Username not found."; // رسالة عند عدم وجود المستخدم
+        $message = "Username not found."; 
     }
 }
 ?>
@@ -183,7 +181,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"])) {
   <div class="login-container">
     <h2>Forget Password</h2>
     
-    <!-- عرض الرسائل بناءً على الحالة -->
+    
     <?php if (!empty($message)): ?>
       <div class="<?= strpos($message, 'error') !== false ? 'error' : 'success' ?>">
         <?= htmlspecialchars($message) ?>
